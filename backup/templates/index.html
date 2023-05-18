@@ -1,62 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-  <title>ChatBot</title>
-  <meta charset="UTF-8">
+  <title>CodeBuddy</title>
+  <metaUTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/style.css') }}">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </head>
-
 <body>
-  <!-- partial:index.partial.html -->
-  <section class="msger">
-    <header class="msger-header">
-      <div class="msger-header-title">
-        <i class="fas fa-bug"></i> ChatBot <i class="fas fa-bug"></i>
-      </div>
-    </header>
-
-    <main class="msger-chat">
-      <div class="msg left-msg">
-        <div class="msg-img" style="background-image: url(https://image.flaticon.com/icons/svg/327/327779.svg)"></div>
-
-        <div class="msg-bubble">
-          <div class="msg-info">
-            <div class="msg-info-name">ChatBot</div>
-            <div class="msg-info-time"></div>
+  <div class="container">
+    <div class="window chatbox" id="chatbox">
+      <section class="msger">
+        <header class="msger-header">
+          <div class="msger-header-title">
+            <i class="fas fa-bug"></i> Python-Only <i class="fas fa-bug"></i>
           </div>
-
-          <div class="msg-text">
-            Hi, welcome to ChatBot! Go ahead and send me a message. 😄
+        </header>
+        <main class="msger-chat">
+          <div class="msg left-msg">
+            <div class="msg-img" style="background-image: url(https://www.svgrepo.com/show/407351/robot.svg)"></div>
+            <div class="msg-bubble">
+              <div class="msg-info">
+                <div class="msg-info-name">Codder</div>
+                <div class="msg-info-time"></div>
+              </div>
+              <div class="msg-text">
+                Hi,! Go ahead and give me a command. 😄
+              </div>
+            </div>
           </div>
-        </div>
+        </main>
+        <form class="msger-inputarea">  
+          <input type="text" class="msger-input" id="textInput" placeholder="Enter your message...">
+          <div id="charCount" style="opacity: 0.5; font-size: 12px;"></div>
+          <button type="submit" class="msger-send-btn">Send</button>
+        </form>
+      </section>
+    </div>
+    <div class="window" id="pythonInterpreter" >
+      <div data-pym-src='https://www.jdoodle.com/plugin' data-language="python3"
+      data-version-index="4" data-libs="mavenlib1, mavenlib2">
       </div>
-
-    </main>
-
-    <form class="msger-inputarea">
-        <textarea class="msger-input" id="textInput" placeholder="Enter your message..." rows="1"></textarea>
-      <button type="submit" class="msger-send-btn">Send</button>
-    </form>
-  </section>
-  <!-- partial -->
+      <script src="https://www.jdoodle.com/assets/jdoodle-pym.min.js" type="text/javascript"></script>
+    </div>
+  </div>
+  
+  <div class="popup" id="popup" style="display: none;">
+    Click to reopen closed window
+  </div>
   <script src='https://use.fontawesome.com/releases/v5.0.13/js/all.js'></script>
   <script>
+    function copyCode(button) {
+      const codeContainer = button.parentElement;
+      const codeElement = codeContainer.querySelector("pre");
+      const code = codeElement.textContent;
+
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      button.textContent = "Copied!";
+      setTimeout(() => {
+        button.textContent = "Copy";
+      }, 2000);
+    }
 
     const msgerForm = get(".msger-inputarea");
     const msgerInput = get(".msger-input");
     const msgerChat = get(".msger-chat");
+    const charCount = get("#charCount");
 
-
-    // Icons made by Freepik from www.flaticon.com
-    const BOT_IMG = "https://image.flaticon.com/icons/svg/327/327779.svg";
-    const PERSON_IMG = "https://image.flaticon.com/icons/svg/145/145867.svg";
-    const BOT_NAME = "ChatBot";
+    const BOT_IMG = "https://www.svgrepo.com/show/407351/robot.svg";
+    const PERSON_IMG = "https://www.svgrepo.com/show/206687/human-cannonball.svg";
+    const BOT_NAME = "   Codder";
     const PERSON_NAME = "You";
+
+    msgerInput.addEventListener("input", event => {
+  const inputLength = event.target.value.length;
+  charCount.textContent = `${inputLength}/69`;
+  if (inputLength > 1024) {
+    event.target.value = event.target.value.slice(0, 1024);
+    charCount.style.color = "red";
+  } else {
+    charCount.style.color = "black";
+  }
+});
+
 
     msgerForm.addEventListener("submit", event => {
       event.preventDefault();
@@ -70,53 +104,39 @@
     });
 
     function appendMessage(name, img, side, text) {
-  // Check for code blocks
-  const codeRegex = /```([\s\S]*?)```/g;
-  let codeMatch;
-  let lastIndex = 0;
-  let formattedText = "";
+      const codeRegex = /```([\w-]+)\n([\s\S]*?)```/g;
+      let formattedText = text.replace(codeRegex, (match, language, code) => {
+        return `<div class="code-header">${language}</div><div class="code-container"><pre>${code}</pre><button class="copy-btn" onclick='copyCode(this)'>Copy</></div>`;
+      });
 
-  while ((codeMatch = codeRegex.exec(text)) !== null) {
-    formattedText += text.slice(lastIndex, codeMatch.index);
-    formattedText += `<div class="code-container"><pre>${codeMatch[1]}</pre><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>`;
-    lastIndex = codeMatch.index + codeMatch[0].length;
-  }
-  formattedText += text.slice(lastIndex);
+      const msgHTML = `
+        <div class="msg ${side}-msg">
+          <div class="msg-img" style="background-image: url(${img})"></div>
 
-  // Simple solution for small apps
-  const msgHTML = `
-<div class="msg ${side}-msg">
-  <div class="msg-img" style="background-image: url(${img})"></div>
+          <div class="msg-bubble">
+            <div class="msg-info">
+              <div class="msg-info-name">${name}</div>
+              <div class="msg-info-time">${formatDate(new Date())}</div>
+            </div>
 
-  <div class="msg-bubble">
-    <div class="msg-info">
-      <div class="msg-info-name">${name}</div>
-      <div class="msg-info-time">${formatDate(new Date())}</div>
-    </div>
+            <div class="msg-text">${formattedText}</div>
+          </div>
+        </div>
+      `;
 
-    <div class="msg-text">${formattedText}</div>
-  </div>
-</div>
-`;
-
-  msgerChat.insertAdjacentHTML("beforeend", msgHTML);
-  msgerChat.scrollTop += 500;
-}
-
+      msgerChat.insertAdjacentHTML("beforeend", msgHTML);
+      msgerChat.scrollTop += 500;
+    }
 
     function botResponse(rawText) {
-
       // Bot Response
       $.get("/get", { msg: rawText }).done(function (data) {
         console.log(rawText);
         console.log(data);
         const msgText = data;
         appendMessage(BOT_NAME, BOT_IMG, "left", msgText);
-
       });
-
     }
-
 
     // Utils
     function get(selector, root = document) {
@@ -129,27 +149,6 @@
 
       return `${h.slice(-2)}:${m.slice(-2)}`;
     }
-
-    function copyCode(button) {
-  const codeContainer = button.parentElement;
-  const codeElement = codeContainer.querySelector("pre");
-  const range = document.createRange();
-  range.selectNode(codeElement);
-  window.getSelection().removeAllRanges();
-  window.getSelection().addRange(range);
-  document.execCommand("copy");
-  window.getSelection().removeAllRanges();
-  button.textContent = "Copied!";
-  setTimeout(() => {
-    button.textContent = "Copy";
-  }, 2000);
-}
-
-
-
-
   </script>
-
 </body>
-
 </html>
